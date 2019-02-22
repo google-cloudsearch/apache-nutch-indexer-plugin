@@ -48,8 +48,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.Optional;
 import org.apache.commons.io.FileUtils;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.nutch.indexer.IndexWriter;
+import org.apache.nutch.indexer.IndexWriterParams;
 import org.apache.nutch.indexer.NutchDocument;
 import org.apache.nutch.indexer.NutchField;
 import org.slf4j.Logger;
@@ -92,10 +92,15 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
   }
 
   @Override
-  public void open(JobConf conf, String name) throws IOException {
+  public void open(org.apache.hadoop.conf.Configuration conf, String name) throws IOException {
+    throw new UnsupportedOperationException("Unsupported deprecated method");
+  }
+
+  @Override
+  public void open(IndexWriterParams parameters) throws IOException {
     LOG.info("Starting up!");
-    initSDKConfig(conf);
-    updateUploadFormat(conf);
+    initSDKConfig(parameters);
+    updateUploadFormat(parameters);
     indexingService = createIndexingService();
     ((Service) indexingService).startAsync().awaitRunning();
     defaultAcl = helper.initDefaultAclFromConfig(indexingService);
@@ -238,8 +243,8 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
     return config;
   }
 
-  private void updateUploadFormat(org.apache.hadoop.conf.Configuration config) throws IOException {
-    String uploadFormatValue = config.get(CONFIG_KEY_UPLOAD_FORMAT);
+  private void updateUploadFormat(IndexWriterParams parameters) throws IOException {
+    String uploadFormatValue = parameters.get(CONFIG_KEY_UPLOAD_FORMAT);
     if (uploadFormatValue != null) {
       try {
         uploadFormat = UploadFormat.valueOf(uploadFormatValue.toUpperCase());
@@ -249,8 +254,8 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
     }
   }
 
-  private void initSDKConfig(org.apache.hadoop.conf.Configuration config) throws IOException {
-    configPath = config.get(CONFIG_KEY_CONFIG_FILE);
+  private void initSDKConfig(IndexWriterParams parameters) throws IOException {
+    configPath = parameters.get(CONFIG_KEY_CONFIG_FILE);
     if (configPath == null) {
       throw new IOException("Missing required configuration parameter: " + CONFIG_KEY_CONFIG_FILE);
     }
