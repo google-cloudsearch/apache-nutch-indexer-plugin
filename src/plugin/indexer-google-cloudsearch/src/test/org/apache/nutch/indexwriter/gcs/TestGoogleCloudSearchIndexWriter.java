@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.Properties;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.nutch.indexer.IndexWriterParams;
 import org.apache.nutch.indexer.NutchDocument;
 import org.apache.nutch.indexwriter.gcs.GoogleCloudSearchIndexWriter.Helper;
 import org.junit.Before;
@@ -74,7 +74,7 @@ public class TestGoogleCloudSearchIndexWriter {
   @Rule public ResetStructuredDataRule resetStructuredData = new ResetStructuredDataRule();
 
   @Mock private Helper mockHelper;
-  @Mock private JobConf mockConfig;
+  @Mock private IndexWriterParams mockParams;
   @Mock private DefaultAcl mockDefaultAcl;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -91,9 +91,9 @@ public class TestGoogleCloudSearchIndexWriter {
     when(mockHelper.initDefaultAclFromConfig(mockIndexingService)).thenReturn(mockDefaultAcl);
     when(mockHelper.getCurrentTimeMillis()).thenReturn(CURRENT_MILLIS);
     when(mockHelper.isConfigIinitialized()).thenReturn(true);
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_CONFIG_FILE))
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_CONFIG_FILE))
         .thenReturn("/path/to/config");
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("RAW");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("RAW");
     when(mockDefaultAcl.applyToIfEnabled(any())).thenReturn(true);
     when(mockIndexingService.getSchema()).thenReturn(new Schema());
     subject = new GoogleCloudSearchIndexWriter(mockHelper);
@@ -115,7 +115,7 @@ public class TestGoogleCloudSearchIndexWriter {
     setupConfig.initConfig(new Properties());
     when(mockHelper.isConfigIinitialized()).thenReturn(false);
     when(mockIndexingService.isRunning()).thenReturn(true);
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -144,7 +144,7 @@ public class TestGoogleCloudSearchIndexWriter {
   public void openShouldInitializeConfig() throws IOException {
     setupConfig.initConfig(new Properties());
     when(mockHelper.isConfigIinitialized()).thenReturn(false);
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     verify(mockHelper, times(1)).isConfigIinitialized();
     verify(mockHelper).initConfig(new String[] {"-Dconfig=/path/to/config"});
   }
@@ -152,7 +152,7 @@ public class TestGoogleCloudSearchIndexWriter {
   @Test
   public void openShouldNotReinitializeConfigWhenAlreadyInitialized() throws IOException {
     setupConfig.initConfig(new Properties());
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     verify(mockHelper, times(1)).isConfigIinitialized();
     verify(mockHelper, times(0)).initConfig(any());
   }
@@ -164,20 +164,20 @@ public class TestGoogleCloudSearchIndexWriter {
     thrown.expect(IOException.class);
     thrown.expectMessage(
         "Failed to initialize SDK configuration. Check the configuration file and try again!");
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
   }
 
   @Test
   public void openShouldFailWithmissingConfigPath() throws IOException {
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_CONFIG_FILE)).thenReturn(null);
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_CONFIG_FILE)).thenReturn(null);
     thrown.expect(IOException.class);
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
   }
 
   @Test
   public void openShouldCreateIndexingService() throws Exception {
     setupConfig.initConfig(new Properties());
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     verify(mockHelper).createIndexingService();
   }
 
@@ -187,7 +187,7 @@ public class TestGoogleCloudSearchIndexWriter {
     when(mockHelper.createIndexingService()).thenThrow(new GeneralSecurityException());
     thrown.expect(IOException.class);
     thrown.expectMessage("failed to create IndexingService");
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
   }
 
   @Test
@@ -195,23 +195,23 @@ public class TestGoogleCloudSearchIndexWriter {
     when(mockHelper.createIndexingService()).thenThrow(new IOException());
     thrown.expect(IOException.class);
     thrown.expectMessage("failed to create IndexingService");
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
   }
 
   @Test
   public void openShouldFailWhenUploadFormatHasInvalidValue() throws IOException {
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT))
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT))
         .thenReturn("Invalid_Value");
     thrown.expect(IOException.class);
     thrown.expectMessage(
         "Unknown value for '" + GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT + "'");
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
   }
 
   @Test
   public void openShouldStartIndexingService() throws IOException {
     setupConfig.initConfig(new Properties());
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     verify(mockIndexingService.startAsync()).awaitRunning();
   }
 
@@ -219,7 +219,7 @@ public class TestGoogleCloudSearchIndexWriter {
   public void deleteShouldSimplyDelegateTheCallToIndexingService() throws IOException {
     setupConfig.initConfig(new Properties());
     String key = URL;
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     subject.delete(key);
     verify(mockIndexingService, times(1)).deleteItem(key, Long.toString(CURRENT_MILLIS).getBytes(),
         RequestMode.ASYNCHRONOUS);
@@ -228,7 +228,7 @@ public class TestGoogleCloudSearchIndexWriter {
   @Test
   public void commitShouldDoNothingOrAtLeastDoNotInteractWithDeps() throws IOException {
     subject.commit();
-    verifyNoMoreInteractions(mockConfig, mockDefaultAcl, mockIndexingService);
+    verifyNoMoreInteractions(mockParams, mockDefaultAcl, mockIndexingService);
   }
 
   @Test
@@ -267,7 +267,7 @@ public class TestGoogleCloudSearchIndexWriter {
   @Test
   public void writeShouldNotFailWhenAddItemThrowsRuntimeException() throws IOException {
     setupConfig.initConfig(new Properties());
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("Text");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("Text");
     SettableFuture<Operation> settable = SettableFuture.create();
     // It's ideal to test RuntimeException from createItem, but since we can't mock it,
     // using mockIndexingService.indexItemAndContent() to throw RuntimeException.
@@ -275,7 +275,7 @@ public class TestGoogleCloudSearchIndexWriter {
         .thenReturn(settable)
         .thenThrow(new RuntimeException())
         .thenReturn(settable);
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -365,7 +365,7 @@ public class TestGoogleCloudSearchIndexWriter {
   public void closeShouldStopIndexingService() throws IOException {
     setupConfig.initConfig(new Properties());
     when(mockIndexingService.isRunning()).thenReturn(true);
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     subject.close();
     verify(mockIndexingService).isRunning();
     verify(mockIndexingService.stopAsync()).awaitTerminated();
@@ -382,8 +382,8 @@ public class TestGoogleCloudSearchIndexWriter {
     setupConfig.initConfig(config);
 
     when(mockIndexingService.getSchema()).thenReturn(new Schema());
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("TEXT");
-    subject.open(mockConfig, "Test");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("TEXT");
+    subject.open(mockParams);
 
     String title = "Helo";
     String language = "en";
@@ -439,8 +439,8 @@ public class TestGoogleCloudSearchIndexWriter {
     setupConfig.initConfig(config);
 
     when(mockIndexingService.getSchema()).thenReturn(schema);
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("TEXT");
-    subject.open(mockConfig, "Test");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("TEXT");
+    subject.open(mockParams);
 
     String content = "<html> <head> <title> Hello </title>"
         + "<meta name='approved' content='true' /></head> <body> Hello </body></html>";
@@ -482,7 +482,7 @@ public class TestGoogleCloudSearchIndexWriter {
 
   private void subjectShouldFailWhenRawUploadModeIsSelectedAndBinaryContentIsNotInValidBase64(
       ThrowingConsumer<NutchDocument, IOException> subjectFunction) throws IOException {
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -497,7 +497,7 @@ public class TestGoogleCloudSearchIndexWriter {
 
   private void subjectShouldFailWhenRawUploadModeIsSelectedAndBinaryContentFieldIsMissing(
       ThrowingConsumer<NutchDocument, IOException> subjectFunction) throws IOException {
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -511,8 +511,8 @@ public class TestGoogleCloudSearchIndexWriter {
 
   private void subjectShouldFailWhenTextUploadModeIsSelectedAndTextContentFieldIsMissing(
       ThrowingConsumer<NutchDocument, IOException> subjectFunction) throws IOException {
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("Text");
-    subject.open(mockConfig, "Test");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("Text");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -525,7 +525,7 @@ public class TestGoogleCloudSearchIndexWriter {
 
   private void subjectShouldFailWhenContentTypeFieldIsMissing(
       ThrowingConsumer<NutchDocument, IOException> subjectFunction) throws IOException {
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -538,10 +538,10 @@ public class TestGoogleCloudSearchIndexWriter {
 
   private void subjectShouldNotFailWhenIndexingServiceThrowsIOException(
       ThrowingConsumer<NutchDocument, IOException> subjectFunction) throws IOException {
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("Text");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("Text");
     when(mockIndexingService.indexItemAndContent(any(), any(), any(), any(), any()))
         .thenThrow(new IOException());
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -558,8 +558,8 @@ public class TestGoogleCloudSearchIndexWriter {
   private void successfulWithDefaultUploadFormatAndCustomerDomainAcls(
       ThrowingConsumer<NutchDocument, IOException> subjectFunction) throws IOException {
     when(mockDefaultAcl.applyToIfEnabled(any())).thenReturn(false);
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn(null);
-    subject.open(mockConfig, "Test");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn(null);
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -582,7 +582,7 @@ public class TestGoogleCloudSearchIndexWriter {
 
   private void successfulRawContent(ThrowingConsumer<NutchDocument, IOException> subjectFunction)
       throws IOException {
-    subject.open(mockConfig, "Test");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
@@ -605,8 +605,8 @@ public class TestGoogleCloudSearchIndexWriter {
 
   private void successfulTextContent(ThrowingConsumer<NutchDocument, IOException> subjectFunction)
       throws IOException {
-    when(mockConfig.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("TEXT");
-    subject.open(mockConfig, "Test");
+    when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("TEXT");
+    subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
     doc.add(GoogleCloudSearchIndexWriter.FIELD_ID, ID);
     doc.add(GoogleCloudSearchIndexWriter.FIELD_URL, URL);
