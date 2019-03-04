@@ -19,7 +19,6 @@
   provider-name="com.google.enterprise.cloudsearch">
 
   <runtime>
-
     <library name="google-cloudsearch-apache-nutch-indexer-plugin-${project.version}.jar">
       <export name="*" />
     </library>
