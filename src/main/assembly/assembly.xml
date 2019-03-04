@@ -24,8 +24,7 @@
 
   <fileSets>
     <fileSet>
-      <!-- TODO: Remove this once code is moved to standard src/main -->
-      <directory>${basedir}/src/plugin/indexer-google-cloudsearch</directory>
+      <directory>${project.build.directory}/plugin/indexer-google-cloudsearch</directory>
       <includes>
         <include>plugin.xml</include>
       </includes>
