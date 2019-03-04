@@ -130,6 +130,33 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Copy plugin.xml -->
+      <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.1.0</version>
+          <executions>
+              <execution>
+                  <id>copy-resources</id>
+                  <phase>package</phase>
+                  <goals>
+                      <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                      <overwrite>true</overwrite>
+                      <outputDirectory>${project.build.directory}/plugin/indexer-google-cloudsearch</outputDirectory>
+                      <resources>
+                          <resource>
+                              <directory>${basedir}/src/plugin/indexer-google-cloudsearch</directory>
+                              <includes>
+                                  <include>plugin.xml</include>
+                              </includes>
+                              <filtering>true</filtering>
+                          </resource>
+                      </resources>
+                  </configuration>
+              </execution>
+          </executions>
+      </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
@@ -187,6 +214,7 @@
         <configuration>
           <archive>
             <manifest>
+              <addClasspath>true</addClasspath>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
@@ -225,7 +253,7 @@
                   <type>jar</type>
                 </artifactItem>
               </artifactItems>
-              <outputDirectory>${project.build.directory}/plugins/indexer-google-cloudsearch</outputDirectory>
+              <outputDirectory>${project.build.directory}/plugin/indexer-google-cloudsearch</outputDirectory>
             </configuration>
           </execution>
         </executions>
