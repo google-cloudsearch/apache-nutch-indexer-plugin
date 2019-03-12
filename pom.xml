@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google.enterprise.cloudsearch</groupId>
   <artifactId>google-cloudsearch-apache-nutch-indexer-plugin</artifactId>
-  <version>v1-0.0.4</version>
+  <version>v1-0.0.5-SNAPSHOT</version>
   <name>Google Cloud Search Apache Nutch Indexer Plugin</name>
   <description>Google Cloud Search implementation of Nutch Index Writer.</description>
 
@@ -295,7 +295,7 @@
     <dependency>
       <groupId>com.google.enterprise.cloudsearch</groupId>
       <artifactId>google-cloudsearch-indexing-connector-sdk</artifactId>
-      <version>v1-0.0.4</version>
+      <version>v1-0.0.5-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>com.google.guava</groupId>
