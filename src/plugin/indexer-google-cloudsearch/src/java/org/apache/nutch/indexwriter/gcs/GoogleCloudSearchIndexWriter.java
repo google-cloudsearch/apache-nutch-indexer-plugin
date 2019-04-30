@@ -93,7 +93,7 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
 
   @Override
   public void open(org.apache.hadoop.conf.Configuration conf, String name) throws IOException {
-    throw new UnsupportedOperationException("Unsupported deprecated method");
+    //do nothing
   }
 
   @Override
