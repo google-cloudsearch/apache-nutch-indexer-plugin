@@ -24,12 +24,12 @@ This connector is an implementation of the
       ```
       (To skip the tests when building the connector, use `mvn package -DskipTests`)
 
-2. Download [Apache Nutch 1.14](http://archive.apache.org/dist/nutch/1.14/) and follow the Apache
+2. Download [Apache Nutch 1.15](http://archive.apache.org/dist/nutch/1.15) and follow the Apache
    Nutch instructions (https://wiki.apache.org/nutch/NutchTutorial) to install.
 
 3. Extract `target/google-cloudsearch-apache-nutch-indexer-plugin-v1.0.0.4.zip` built from step 2 to
    a folder. Copy `plugins/indexer-google-cloud-search` folder to the Apache Nutch install plugins
-   folder (`apache-nutch-1.14/plugins`).
+   folder (`apache-nutch-1.15/plugins`).
 
 For further information on configuration and deployment of this indexer plugin, see
 [Deploy an Apache Nutch Indexer
