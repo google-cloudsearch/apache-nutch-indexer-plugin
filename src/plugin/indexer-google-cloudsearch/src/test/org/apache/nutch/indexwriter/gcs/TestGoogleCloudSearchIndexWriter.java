@@ -1,11 +1,15 @@
 package org.apache.nutch.indexwriter.gcs;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -39,7 +43,6 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
-
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.nutch.indexer.IndexWriterParams;
 import org.apache.nutch.indexer.NutchDocument;
@@ -55,7 +58,7 @@ import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestGoogleCloudSearchIndexWriter {
@@ -90,7 +93,7 @@ public class TestGoogleCloudSearchIndexWriter {
     when(mockHelper.createIndexingService()).thenReturn(mockIndexingService);
     when(mockHelper.initDefaultAclFromConfig(mockIndexingService)).thenReturn(mockDefaultAcl);
     when(mockHelper.getCurrentTimeMillis()).thenReturn(CURRENT_MILLIS);
-    when(mockHelper.isConfigIinitialized()).thenReturn(true);
+    when(mockHelper.isConfigInitialized()).thenReturn(true);
     when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_CONFIG_FILE))
         .thenReturn("/path/to/config");
     when(mockParams.get(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT)).thenReturn("RAW");
@@ -111,9 +114,46 @@ public class TestGoogleCloudSearchIndexWriter {
   }
 
   @Test
+  public void helper_smokeTest() throws IOException, GeneralSecurityException {
+    // TODO(jlacey): We might be able to build a convincing service account JSON stub
+    // in order to instantiate the production IndexingService, too, but stub it for now.
+    Helper helper = spy(new Helper());
+    doReturn(mockIndexingService).when(helper).createIndexingService();
+
+    assertEquals(System.currentTimeMillis(), helper.getCurrentTimeMillis(), 100.0);
+    subject = new GoogleCloudSearchIndexWriter(helper);
+    subject.open(mockParams);
+  }
+
+  @Test
+  @SuppressWarnings("deprecation")
+  public void open_deprecatedOverload_doesNothing() {
+    // A null helper means that no helper methods can be called.
+    subject = new GoogleCloudSearchIndexWriter(null);
+    org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
+    subject.open(conf, "some name");
+  }
+
+  @Test
+  public void getConf_returnsNull() {
+    // A null helper means that no helper methods can be called.
+    subject = new GoogleCloudSearchIndexWriter(null);
+    assertNull(subject.getConf());
+  }
+
+  @Test
+  public void getConf_returnsSetConf() {
+    // A null helper means that no helper methods can be called.
+    subject = new GoogleCloudSearchIndexWriter(null);
+    org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
+    subject.setConf(conf);
+    assertEquals(subject.getConf(), conf);
+  }
+
+  @Test
   public void fullLifecycle() throws IOException, GeneralSecurityException {
     setupConfig.initConfig(new Properties());
-    when(mockHelper.isConfigIinitialized()).thenReturn(false);
+    when(mockHelper.isConfigInitialized()).thenReturn(false);
     when(mockIndexingService.isRunning()).thenReturn(true);
     subject.open(mockParams);
     NutchDocument doc = new NutchDocument();
@@ -126,7 +166,7 @@ public class TestGoogleCloudSearchIndexWriter {
     subject.delete(ID);
     subject.close();
     InOrder inOrder = Mockito.inOrder(mockHelper, mockIndexingService);
-    inOrder.verify(mockHelper).isConfigIinitialized();
+    inOrder.verify(mockHelper).isConfigInitialized();
     inOrder.verify(mockHelper).initConfig(any());
     inOrder.verify(mockHelper).createIndexingService();
     inOrder.verify(mockIndexingService).startAsync();
@@ -143,9 +183,9 @@ public class TestGoogleCloudSearchIndexWriter {
   @Test
   public void openShouldInitializeConfig() throws IOException {
     setupConfig.initConfig(new Properties());
-    when(mockHelper.isConfigIinitialized()).thenReturn(false);
+    when(mockHelper.isConfigInitialized()).thenReturn(false);
     subject.open(mockParams);
-    verify(mockHelper, times(1)).isConfigIinitialized();
+    verify(mockHelper).isConfigInitialized();
     verify(mockHelper).initConfig(new String[] {"-Dconfig=/path/to/config"});
   }
 
@@ -153,13 +193,13 @@ public class TestGoogleCloudSearchIndexWriter {
   public void openShouldNotReinitializeConfigWhenAlreadyInitialized() throws IOException {
     setupConfig.initConfig(new Properties());
     subject.open(mockParams);
-    verify(mockHelper, times(1)).isConfigIinitialized();
-    verify(mockHelper, times(0)).initConfig(any());
+    verify(mockHelper).isConfigInitialized();
+    verify(mockHelper, never()).initConfig(any());
   }
 
   @Test
   public void openShouldFailWhenInitializingConfigThrowsAnException() throws IOException {
-    when(mockHelper.isConfigIinitialized()).thenReturn(false);
+    when(mockHelper.isConfigInitialized()).thenReturn(false);
     doThrow(new IOException()).when(mockHelper).initConfig(any());
     thrown.expect(IOException.class);
     thrown.expectMessage(
@@ -221,7 +261,7 @@ public class TestGoogleCloudSearchIndexWriter {
     String key = URL;
     subject.open(mockParams);
     subject.delete(key);
-    verify(mockIndexingService, times(1)).deleteItem(key, Long.toString(CURRENT_MILLIS).getBytes(),
+    verify(mockIndexingService).deleteItem(key, Long.toString(CURRENT_MILLIS).getBytes(),
         RequestMode.ASYNCHRONOUS);
   }
 
@@ -435,7 +475,7 @@ public class TestGoogleCloudSearchIndexWriter {
                 .setPropertyDefinitions(Arrays.asList(prop1))));
 
     Properties config = new Properties();
-    config.put(IndexingItemBuilder.OBJECT_TYPE, "schema1");
+    config.put(IndexingItemBuilder.OBJECT_TYPE_VALUE, "schema1");
     setupConfig.initConfig(config);
 
     when(mockIndexingService.getSchema()).thenReturn(schema);
