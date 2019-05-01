@@ -27,6 +27,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
+import com.google.enterprise.cloudsearch.sdk.config.Configuration;
 import com.google.enterprise.cloudsearch.sdk.indexing.Acl;
 import com.google.enterprise.cloudsearch.sdk.indexing.DefaultAcl;
 import com.google.enterprise.cloudsearch.sdk.indexing.IndexingItemBuilder;
@@ -37,7 +38,6 @@ import com.google.enterprise.cloudsearch.sdk.indexing.IndexingService.ContentFor
 import com.google.enterprise.cloudsearch.sdk.indexing.IndexingService.RequestMode;
 import com.google.enterprise.cloudsearch.sdk.indexing.IndexingServiceImpl;
 import com.google.enterprise.cloudsearch.sdk.indexing.StructuredData;
-import com.google.enterprise.cloudsearch.sdk.config.Configuration;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
@@ -45,8 +45,8 @@ import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.nutch.indexer.IndexWriter;
 import org.apache.nutch.indexer.IndexWriterParams;
@@ -92,7 +92,8 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
   }
 
   @Override
-  public void open(org.apache.hadoop.conf.Configuration conf, String name) throws IOException {
+  @SuppressWarnings("deprecation")
+  public void open(org.apache.hadoop.conf.Configuration conf, String name) {
     //do nothing
   }
 
@@ -183,7 +184,7 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
     }
     return IndexingItemBuilder.fromConfiguration((String) doc.getFieldValue(FIELD_ID))
         .setItemType(ItemType.CONTENT_ITEM)
-        .setMimeType(contentType)
+        .setMimeType(FieldOrValue.withValue(contentType))
         .setSourceRepositoryUrl(FieldOrValue.withValue((String) doc.getFieldValue(FIELD_URL)))
         .setValues(multimap)
         .setTitle(FieldOrValue.withField(ITEM_METADATA_TITLE_DEFAULT))
@@ -260,7 +261,7 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
       throw new IOException("Missing required configuration parameter: " + CONFIG_KEY_CONFIG_FILE);
     }
     String[] args = {"-Dconfig=" + configPath};
-    if (!helper.isConfigIinitialized()) {
+    if (!helper.isConfigInitialized()) {
       try {
         helper.initConfig(args);
       } catch (IOException e) {
@@ -273,7 +274,7 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
 
   static class Helper {
 
-    boolean isConfigIinitialized() {
+    boolean isConfigInitialized() {
       return Configuration.isInitialized();
     }
 
