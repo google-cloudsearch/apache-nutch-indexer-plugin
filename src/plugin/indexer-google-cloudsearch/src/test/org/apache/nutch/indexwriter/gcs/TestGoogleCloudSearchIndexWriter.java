@@ -27,6 +27,7 @@ import com.google.api.services.cloudsearch.v1.model.Operation;
 import com.google.api.services.cloudsearch.v1.model.PropertyDefinition;
 import com.google.api.services.cloudsearch.v1.model.Schema;
 import com.google.api.services.cloudsearch.v1.model.StructuredDataObject;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.enterprise.cloudsearch.sdk.config.Configuration.ResetConfigRule;
 import com.google.enterprise.cloudsearch.sdk.config.Configuration.SetupConfigRule;
@@ -43,7 +44,6 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.nutch.indexer.IndexWriterParams;
 import org.apache.nutch.indexer.NutchDocument;
 import org.apache.nutch.indexwriter.gcs.GoogleCloudSearchIndexWriter.Helper;
@@ -616,7 +616,7 @@ public class TestGoogleCloudSearchIndexWriter {
     assertEquals(itemContentCaptor.getValue().getType(), MIME_PDF);
     assertTrue(
         Arrays.equals(
-            IOUtils.toByteArray(itemContentCaptor.getValue().getInputStream()),
+            ByteStreams.toByteArray(itemContentCaptor.getValue().getInputStream()),
             CONTENT.getBytes()));
   }
 
@@ -639,7 +639,7 @@ public class TestGoogleCloudSearchIndexWriter {
     assertEquals(itemContentCaptor.getValue().getType(), MIME_PDF);
     assertTrue(
         Arrays.equals(
-            IOUtils.toByteArray(itemContentCaptor.getValue().getInputStream()),
+            ByteStreams.toByteArray(itemContentCaptor.getValue().getInputStream()),
             CONTENT.getBytes()));
   }
 
@@ -663,7 +663,7 @@ public class TestGoogleCloudSearchIndexWriter {
     assertEquals(itemContentCaptor.getValue().getType(), MIME_TEXT);
     assertTrue(
         Arrays.equals(
-            IOUtils.toByteArray(itemContentCaptor.getValue().getInputStream()),
+            ByteStreams.toByteArray(itemContentCaptor.getValue().getInputStream()),
             CONTENT.getBytes()));
   }
 
