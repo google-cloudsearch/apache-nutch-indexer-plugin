@@ -1,0 +1,29 @@
+[ {
+  "acl" : {
+    "aclInheritanceType" : "PARENT_OVERRIDE",
+    "inheritAclFrom" : "datasources/DATA_SOURCE_ID/items/DEFAULT_ACL_VIRTUAL_CONTAINER_UNIQUE_ID"
+  },
+  "content" : {
+    "contentFormat" : "RAW",
+    "inlineContent" : "TmV3IGNvbnRlbnQK"
+  },
+  "itemType" : "CONTENT_ITEM",
+  "metadata" : {
+    "contentLanguage" : "fr-ca",
+    "createTime" : "2002-10-02T15:00:00Z",
+    "mimeType" : "text/plain",
+    "objectType" : "schema",
+    "sourceRepositoryUrl" : "http://HOST_PORT/edge-cases/empty_UNIQUE_ID.txt",
+    "title" : "Default title",
+    "updateTime" : "2019-06-06T12:07:45Z"
+  },
+  "name" : "datasources/DATA_SOURCE_ID/items/http:%2F%2FHOST_PORT%2Fedge-cases%2Fempty_UNIQUE_ID.txt",
+  "queue" : "default",
+  "status" : {
+    "code" : "ACCEPTED"
+  },
+  "structuredData" : {
+    "object" : { }
+  },
+  "version" : "MTU1OTgyMzAzMjg3Nw=="
+} ]
