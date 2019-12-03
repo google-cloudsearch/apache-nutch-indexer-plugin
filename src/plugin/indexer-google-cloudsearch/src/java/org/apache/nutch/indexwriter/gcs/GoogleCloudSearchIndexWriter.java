@@ -42,9 +42,12 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.util.AbstractMap;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.FileUtils;
@@ -60,7 +63,10 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
   static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String CONFIG_KEY_CONFIG_FILE = "gcs.config.file";
+  public static final String CONFIG_KEY_CONFIG_FILE_DESC =
+      "Path to Google Cloud Search configuration file";
   public static final String CONFIG_KEY_UPLOAD_FORMAT = "gcs.uploadFormat";
+  public static final String CONFIG_KEY_UPLOAD_FORMAT_DESC = "Upload Format";
   public static final String FIELD_ID = "id";
   public static final String FIELD_URL = "url";
   public static final String FIELD_RAW_CONTENT = "binaryContent";
@@ -229,17 +235,19 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
     LOG.info("Shutting down (took: " + stopWatch.elapsed(TimeUnit.MILLISECONDS) + "ms)!");
   }
 
-  @Override
-  public String describe() {
-    return "Google Cloud Search Indexer";
+  public Map<String, Entry<String, Object>> describe() {
+    Map<String, Map.Entry<String, Object>> properties = new LinkedHashMap<>();
+    properties.put(CONFIG_KEY_CONFIG_FILE,
+        new AbstractMap.SimpleEntry<>(CONFIG_KEY_CONFIG_FILE_DESC, this.configPath));
+    properties.put(CONFIG_KEY_UPLOAD_FORMAT,
+        new AbstractMap.SimpleEntry<>(CONFIG_KEY_UPLOAD_FORMAT_DESC, this.uploadFormat));
+    return properties;
   }
 
-  @Override
   public void setConf(org.apache.hadoop.conf.Configuration conf) {
     config = conf;
   }
 
-  @Override
   public org.apache.hadoop.conf.Configuration getConf() {
     return config;
   }
