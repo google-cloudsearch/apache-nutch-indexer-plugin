@@ -235,6 +235,7 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
     LOG.info("Shutting down (took: " + stopWatch.elapsed(TimeUnit.MILLISECONDS) + "ms)!");
   }
 
+  @Override
   public Map<String, Entry<String, Object>> describe() {
     Map<String, Map.Entry<String, Object>> properties = new LinkedHashMap<>();
     properties.put(CONFIG_KEY_CONFIG_FILE,
@@ -244,10 +245,12 @@ public class GoogleCloudSearchIndexWriter implements IndexWriter {
     return properties;
   }
 
+  @Override
   public void setConf(org.apache.hadoop.conf.Configuration conf) {
     config = conf;
   }
 
+  @Override
   public org.apache.hadoop.conf.Configuration getConf() {
     return config;
   }
