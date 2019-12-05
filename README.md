@@ -19,7 +19,7 @@ This connector is an implementation of the
 
    b. Checkout the desired version of the connector and build the ZIP file:
       ```
-      git checkout master#tags/v1-0.0.5
+      git checkout master # TODO(wiarlawd): tags/v1-0.0.5
       mvn package
       ```
       (To skip the tests when building the connector, use `mvn package -DskipTests`)
