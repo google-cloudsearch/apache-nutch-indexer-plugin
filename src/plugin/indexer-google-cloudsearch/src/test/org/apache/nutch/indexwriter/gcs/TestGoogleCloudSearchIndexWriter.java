@@ -41,16 +41,12 @@ import com.google.enterprise.cloudsearch.sdk.indexing.IndexingService.RequestMod
 import com.google.enterprise.cloudsearch.sdk.indexing.StructuredData.ResetStructuredDataRule;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Properties;
 import org.apache.nutch.indexer.IndexWriterParams;
 import org.apache.nutch.indexer.NutchDocument;
 import org.apache.nutch.indexwriter.gcs.GoogleCloudSearchIndexWriter.Helper;
-import org.apache.nutch.indexwriter.gcs.GoogleCloudSearchIndexWriter.UploadFormat;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -402,14 +398,7 @@ public class TestGoogleCloudSearchIndexWriter {
 
   @Test
   public void describeShouldReturnPluginName() {
-    Map<String, Map.Entry<String, Object>> properties = new LinkedHashMap<>();
-    properties.put(GoogleCloudSearchIndexWriter.CONFIG_KEY_CONFIG_FILE,
-        new AbstractMap.SimpleEntry<>(GoogleCloudSearchIndexWriter.CONFIG_KEY_CONFIG_FILE_DESC,
-            null));
-    properties.put(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT,
-        new AbstractMap.SimpleEntry<>(GoogleCloudSearchIndexWriter.CONFIG_KEY_UPLOAD_FORMAT_DESC,
-            UploadFormat.RAW));
-    assertEquals(properties, subject.describe());
+    assertEquals("Google Cloud Search Indexer", subject.describe());
   }
 
   @Test
